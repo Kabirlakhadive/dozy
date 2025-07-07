@@ -1,6 +1,8 @@
 import 'package:dozy/widgets/summary_widgets.dart';
 import 'package:flutter/material.dart';
 import '../widgets/task_tile.dart';
+import 'add_task_page.dart';
+import '../models/task.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -22,6 +24,19 @@ class _HomePageState extends State<HomePage> {
     'You have 40 tasks this month.',
   ];
 
+  List<Task> _tasks = [];
+
+  Future<void> _addTask() async {
+    final result = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(builder: (context) => const AddTaskPage()),
+    );
+    if (result != null && result['title'] != null && result['title'].toString().isNotEmpty) {
+      setState(() {
+        _tasks.insert(0, Task.fromMap(result));
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -36,7 +51,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Color _backgroundColor(double shrinkOffset, double maxExtent) {
-    // Animate from white to 0xFFBBDEFB as the header shrinks
+    if (shrinkOffset >= maxExtent) {
+      return const Color(0xFFBBDEFB);
+    }
     final t = (shrinkOffset / maxExtent).clamp(0.0, 1.0);
     return Color.lerp(Colors.white, const Color(0xFFBBDEFB), t)!;
   }
@@ -45,10 +62,13 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final double topSectionMaxHeight = MediaQuery.of(context).size.height * 0.25;
     final double topSectionMinHeight = 0;
+    double scrollOffset = _scrollController.hasClients ? _scrollController.offset : 0.0;
+    double maxExtent = topSectionMaxHeight;
+    Color bgColor = _backgroundColor(scrollOffset, maxExtent);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tasks'),
-        backgroundColor: Colors.transparent,
+        title: const Text('Dozy', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        backgroundColor: bgColor,
         elevation: 0,
       ),
       extendBodyBehindAppBar: false,
@@ -95,21 +115,66 @@ class _HomePageState extends State<HomePage> {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.only(top: 10),
-                        child: ListView(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          children: const [
-                            TaskTile(title: 'Task 1', description: 'This is the first task', priority: 'High', dueDate: '2025-01-01', startTime: '10:00', endTime: '11:00'),
-                            TaskTile(title: 'Task 2', description: 'This is the second task', priority: 'Medium', dueDate: '2025-01-01', startTime: '10:00', endTime: '11:00'),
-                            TaskTile(title: 'Task 3', description: 'This is the third task', priority: 'Low', dueDate: '2025-01-01', startTime: '10:00', endTime: '11:00'),
-                            TaskTile(title: 'Task 4', description: 'This is the fourth task', priority: 'Low', dueDate: '2025-01-01', startTime: '10:00', endTime: '11:00'),
-                            TaskTile(title: 'Task 5', description: 'This is the fifth task', priority: 'High', dueDate: '2025-01-01', startTime: '10:00', endTime: '11:00'),
-                            TaskTile(title: 'Task 6', description: 'This is the sixth task', priority: 'High', dueDate: '2025-01-01', startTime: '10:00', endTime: '11:00'),
-                            TaskTile(title: 'Task 7', description: 'This is the seventh task', priority: 'High', dueDate: '2025-01-01', startTime: '10:00', endTime: '11:00'),
-                            TaskTile(title: 'Task 8', description: 'This is the eighth task', priority: 'High', dueDate: '2025-01-01', startTime: '10:00', endTime: '11:00'),
-                            TaskTile(title: 'Task 9', description: 'This is the ninth task', priority: 'High', dueDate: '2025-01-01', startTime: '10:00', endTime: '11:00'),
-                            TaskTile(title: 'Task 10', description: 'This is the tenth task', priority: 'High', dueDate: '2025-01-01', startTime: '10:00', endTime: '11:00'),
-                          ],
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: MediaQuery.of(context).size.height ,
+                          ),
+                          child: _tasks.isEmpty
+                            ? const Padding(
+                                padding: EdgeInsets.all(32.0),
+                                child: Center(
+                                  child: Text(
+                                    'Start your day now!',
+                                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.black54),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              )
+                            : ListView(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                children: _tasks.asMap().entries.map((entry) {
+                                  final idx = entry.key;
+                                  final task = entry.value;
+                                  return TaskTile(
+                                    title: task.title,
+                                    description: task.description,
+                                    priority: task.priority,
+                                    dueDate: task.dueDate,
+                                    startTime: task.startTime,
+                                    endTime: task.endTime,
+                                    project: task.project,
+                                    onDelete: () async {
+                                      final confirm = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                          title: const Text('Delete Task'),
+                                          content: const Text('Are you sure you want to delete this task?'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.of(context).pop(false),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                              ),
+                                              onPressed: () => Navigator.of(context).pop(true),
+                                              child: const Text('Delete'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      if (confirm == true) {
+                                        setState(() {
+                                          _tasks.removeAt(idx);
+                                        });
+                                      }
+                                    },
+                                  );
+                                }).toList(),
+                              ),
                         ),
                       ),
                     ),
@@ -121,7 +186,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: _addTask,
         child: const Icon(Icons.add),
       ),
     );
