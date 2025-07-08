@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "873718840033",
+    "project_id": "dozy-c3e50",
+    "storage_bucket": "dozy-c3e50.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:873718840033:android:bb73fe821032f2bd1615a0",
+        "android_client_info": {
+          "package_name": "com.codeNext.dozy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7jlw6CYF41-YxQ6fuclS6Fbnk8K5-Hno"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:873718840033:android:2535f27e6ae2c7a71615a0",
+        "android_client_info": {
+          "package_name": "com.example.dozy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7jlw6CYF41-YxQ6fuclS6Fbnk8K5-Hno"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

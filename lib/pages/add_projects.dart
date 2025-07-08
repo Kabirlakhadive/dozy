@@ -13,7 +13,7 @@ const List<IconData> projectIcons = [
 ];
 
 class AddProjectsPage extends StatefulWidget {
-  const AddProjectsPage({Key? key}) : super(key: key);
+  const AddProjectsPage({super.key});
 
   @override
   State<AddProjectsPage> createState() => _AddProjectsPageState();

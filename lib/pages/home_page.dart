@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../widgets/task_tile.dart';
 import 'add_task_page.dart';
 import '../models/task.dart';
+import 'package:provider/provider.dart';
+import '../providers/task_provider.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -24,16 +26,12 @@ class _HomePageState extends State<HomePage> {
     'You have 40 tasks this month.',
   ];
 
-  List<Task> _tasks = [];
-
   Future<void> _addTask() async {
     final result = await Navigator.of(context).push<Map<String, dynamic>>(
       MaterialPageRoute(builder: (context) => const AddTaskPage()),
     );
     if (result != null && result['title'] != null && result['title'].toString().isNotEmpty) {
-      setState(() {
-        _tasks.insert(0, Task.fromMap(result));
-      });
+      context.read<TaskProvider>().addTask(Task.fromMap(result));
     }
   }
 
@@ -119,62 +117,65 @@ class _HomePageState extends State<HomePage> {
                           constraints: BoxConstraints(
                             minHeight: MediaQuery.of(context).size.height ,
                           ),
-                          child: _tasks.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.all(32.0),
-                                child: Center(
-                                  child: Text(
-                                    'Start your day now!',
-                                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.black54),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              )
-                            : ListView(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                children: _tasks.asMap().entries.map((entry) {
-                                  final idx = entry.key;
-                                  final task = entry.value;
-                                  return TaskTile(
-                                    title: task.title,
-                                    description: task.description,
-                                    priority: task.priority,
-                                    dueDate: task.dueDate,
-                                    startTime: task.startTime,
-                                    endTime: task.endTime,
-                                    project: task.project,
-                                    onDelete: () async {
-                                      final confirm = await showDialog<bool>(
-                                        context: context,
-                                        builder: (context) => AlertDialog(
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                          title: const Text('Delete Task'),
-                                          content: const Text('Are you sure you want to delete this task?'),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () => Navigator.of(context).pop(false),
-                                              child: const Text('Cancel'),
+                          child: Consumer<TaskProvider>(
+                            builder: (context, taskProvider, _) {
+                              final tasks = taskProvider.tasks;
+                              return tasks.isEmpty
+                                ? const Padding(
+                                    padding: EdgeInsets.all(32.0),
+                                    child: Center(
+                                      child: Text(
+                                        'Start your day now!',
+                                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.black54),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  )
+                                : ListView(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    children: tasks.asMap().entries.map((entry) {
+                                      final idx = entry.key;
+                                      final task = entry.value;
+                                      return TaskTile(
+                                        title: task.title,
+                                        description: task.description,
+                                        priority: task.priority,
+                                        dueDate: task.dueDate,
+                                        startTime: task.startTime,
+                                        endTime: task.endTime,
+                                        project: task.project,
+                                        onDelete: () async {
+                                          final confirm = await showDialog<bool>(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                              title: const Text('Delete Task'),
+                                              content: const Text('Are you sure you want to delete this task?'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.of(context).pop(false),
+                                                  child: const Text('Cancel'),
+                                                ),
+                                                ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                  ),
+                                                  onPressed: () => Navigator.of(context).pop(true),
+                                                  child: const Text('Delete'),
+                                                ),
+                                              ],
                                             ),
-                                            ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                              ),
-                                              onPressed: () => Navigator.of(context).pop(true),
-                                              child: const Text('Delete'),
-                                            ),
-                                          ],
-                                        ),
+                                          );
+                                          if (confirm == true) {
+                                            context.read<TaskProvider>().removeTask(idx);
+                                          }
+                                        },
                                       );
-                                      if (confirm == true) {
-                                        setState(() {
-                                          _tasks.removeAt(idx);
-                                        });
-                                      }
-                                    },
+                                    }).toList(),
                                   );
-                                }).toList(),
-                              ),
+                            },
+                          ),
                         ),
                       ),
                     ),
@@ -194,7 +195,9 @@ class _HomePageState extends State<HomePage> {
 }
 
 class _AnimatedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  @override
   final double minExtent;
+  @override
   final double maxExtent;
   final PageController pageController;
   final int currentPage;

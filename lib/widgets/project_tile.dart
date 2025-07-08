@@ -12,7 +12,7 @@ class ProjectTile extends StatelessWidget {
   final VoidCallback? onDelete;
 
   const ProjectTile({
-    Key? key,
+    super.key,
     required this.title,
     this.description,
     required this.color,
@@ -22,7 +22,7 @@ class ProjectTile extends StatelessWidget {
     this.completedTasks = 0,
     this.taskCount = 0,
     this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

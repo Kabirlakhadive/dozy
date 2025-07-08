@@ -11,7 +11,7 @@ class TaskTile extends StatelessWidget {
   final VoidCallback? onDelete;
 
   const TaskTile({
-    Key? key,
+    super.key,
     required this.title,
     required this.description,
     required this.priority,
@@ -20,7 +20,7 @@ class TaskTile extends StatelessWidget {
     this.endTime,
     this.project,
     this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
